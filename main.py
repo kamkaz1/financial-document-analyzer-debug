@@ -10,6 +10,8 @@ from agents import financial_analyst, verifier, investment_advisor, risk_assesso
 from task import analyze_financial_document as analyze_task, verification, investment_analysis, risk_assessment
 from database import get_db, init_database, close_database
 from crud import AnalysisCRUD
+from queue_config import get_queue, is_redis_available
+from background_tasks import run_financial_analysis
 
 app = FastAPI(title="Financial Document Analyzer", description="AI-powered financial document analysis system")
 
@@ -113,54 +115,76 @@ async def analyze_financial_document_endpoint(
             analysis_type="comprehensive"
         )
         
-        # Update analysis status to processing
-        AnalysisCRUD.update_analysis_status(
-            db=db,
-            analysis_id=analysis_record.id,
-            status="processing"
-        )
-        
-        # Process the financial document with all analysts
-        analysis_result = run_crew(query=query, file_path=file_path)
-        
-        # Update analysis with results
-        AnalysisCRUD.update_analysis_status(
-            db=db,
-            analysis_id=analysis_record.id,
-            status="completed",
-            result_summary="Comprehensive financial analysis completed by AI specialists",
-            detailed_results={
-                "analysis_result": str(analysis_result),
-                "components_analyzed": [
-                    "Document verification and authenticity",
-                    "Financial performance metrics and trends",
-                    "Investment opportunities and recommendations",
-                    "Risk assessment and mitigation strategies"
-                ]
+        # Check if Redis queue is available
+        if is_redis_available():
+            # Queue the analysis task
+            queue = get_queue()
+            job = queue.enqueue(
+                run_financial_analysis,
+                analysis_record.id,
+                query,
+                file_path,
+                timeout='10m'  # 10 minute timeout
+            )
+            
+            return {
+                "status": "queued",
+                "message": "Financial document analysis queued for processing",
+                "query": query,
+                "analysis": {
+                    "analysis_id": analysis_record.id,
+                    "job_id": job.id,
+                    "status": "queued",
+                    "summary": "Analysis has been queued and will be processed in the background"
+                },
+                "file_info": {
+                    "filename": file.filename,
+                    "file_size": len(content)
+                },
+                "disclaimer": "This analysis is for informational purposes only. Please consult with qualified financial professionals before making investment decisions."
             }
-        )
-        
-        return {
-            "status": "success",
-            "message": "Financial document analyzed successfully",
-            "query": query,
-            "analysis": {
-                "analysis_id": analysis_record.id,
-                "summary": "Comprehensive financial analysis completed by AI specialists",
-                "detailed_results": str(analysis_result),
-                "components_analyzed": [
-                    "Document verification and authenticity",
-                    "Financial performance metrics and trends",
-                    "Investment opportunities and recommendations", 
-                    "Risk assessment and mitigation strategies"
-                ]
-            },
-            "file_info": {
-                "filename": file.filename,
-                "file_size": len(content)
-            },
-            "disclaimer": "This analysis is for informational purposes only. Please consult with qualified financial professionals before making investment decisions."
-        }
+        else:
+            # Fallback to synchronous processing if Redis is not available
+            analysis_result = run_crew(query=query, file_path=file_path)
+            
+            # Update analysis with results
+            AnalysisCRUD.update_analysis_status(
+                db=db,
+                analysis_id=analysis_record.id,
+                status="completed",
+                result_summary="Comprehensive financial analysis completed by AI specialists",
+                detailed_results={
+                    "analysis_result": str(analysis_result),
+                    "components_analyzed": [
+                        "Document verification and authenticity",
+                        "Financial performance metrics and trends",
+                        "Investment opportunities and recommendations",
+                        "Risk assessment and mitigation strategies"
+                    ]
+                }
+            )
+            
+            return {
+                "status": "success",
+                "message": "Financial document analyzed successfully",
+                "query": query,
+                "analysis": {
+                    "analysis_id": analysis_record.id,
+                    "summary": "Comprehensive financial analysis completed by AI specialists",
+                    "detailed_results": str(analysis_result),
+                    "components_analyzed": [
+                        "Document verification and authenticity",
+                        "Financial performance metrics and trends",
+                        "Investment opportunities and recommendations", 
+                        "Risk assessment and mitigation strategies"
+                    ]
+                },
+                "file_info": {
+                    "filename": file.filename,
+                    "file_size": len(content)
+                },
+                "disclaimer": "This analysis is for informational purposes only. Please consult with qualified financial professionals before making investment decisions."
+            }
         
     except HTTPException:
         raise
@@ -179,13 +203,8 @@ async def analyze_financial_document_endpoint(
         raise HTTPException(status_code=500, detail=f"Error processing financial document: {str(e)}")
     
     finally:
-        # Clean up uploaded file
-        if os.path.exists(file_path):
-            try:
-                os.remove(file_path)
-            except Exception as cleanup_error:
-                # Log cleanup error but don't fail the request
-                print(f"Warning: Could not clean up file {file_path}: {cleanup_error}")
+        # File cleanup is now handled in the background task
+        pass
 
 # New database-related endpoints
 @app.get("/analyses")
@@ -240,7 +259,26 @@ async def get_analysis(
         "user_id": analysis.user_id
     }
 
-
+@app.get("/queue/status")
+async def get_queue_status():
+    """Get queue status and statistics"""
+    if not is_redis_available():
+        return {
+            "status": "unavailable",
+            "message": "Redis queue is not available",
+            "fallback": "Using synchronous processing"
+        }
+    
+    queue = get_queue()
+    
+    return {
+        "status": "available",
+        "queue_name": "analysis",
+        "pending_jobs": len(queue),
+        "failed_jobs": len(queue.failed_job_registry),
+        "finished_jobs": len(queue.finished_job_registry),
+        "message": "Redis queue is operational"
+    }
 
 if __name__ == "__main__":
     import uvicorn
