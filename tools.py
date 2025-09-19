@@ -4,13 +4,16 @@ from dotenv import load_dotenv
 load_dotenv()
 
 from crewai.tools import tool  # Available in crewai.tools
-from crewai_tools import SerperDevTool
 from langchain_community.document_loaders import PyPDFLoader
 
 ## Creating search tool with API key
 try:
+    from crewai_tools import SerperDevTool
     search_tool = SerperDevTool()
     print("✅ SerperDevTool initialized successfully")
+except ImportError:
+    print("⚠️ crewai_tools not available, using fallback")
+    search_tool = None
 except Exception as e:
     print(f"⚠️ SerperDevTool initialization failed: {e}")
     search_tool = None
@@ -28,22 +31,26 @@ def read_financial_document(path: str = 'data/sample.pdf') -> str:
         str: Full content of the financial document
     """
     try:
-        # Load the PDF document
-        loader = PyPDFLoader(file_path=path)
-        docs = loader.load()
+        if PDF_LOADER_AVAILABLE:
+            # Load the PDF document using langchain
+            loader = PyPDFLoader(file_path=path)
+            docs = loader.load()
 
-        full_report = ""
-        for doc in docs:
-            # Clean and format the financial document data
-            content = doc.page_content
+            full_report = ""
+            for doc in docs:
+                # Clean and format the financial document data
+                content = doc.page_content
 
-            # Remove extra whitespaces and format properly
-            while "\n\n" in content:
-                content = content.replace("\n\n", "\n")
+                # Remove extra whitespaces and format properly
+                while "\n\n" in content:
+                    content = content.replace("\n\n", "\n")
 
-            full_report += content + "\n"
+                full_report += content + "\n"
 
-        return full_report.strip()
+            return full_report.strip()
+        else:
+            # Fallback: return placeholder text
+            return f"PDF file at {path} detected but langchain_community not available for processing. Please install langchain_community for full PDF reading functionality."
         
     except Exception as e:
         return f"Error reading PDF file: {str(e)}"
