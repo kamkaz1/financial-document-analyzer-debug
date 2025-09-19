@@ -9,7 +9,7 @@ from crewai import Crew, Process
 from agents import financial_analyst, verifier, investment_advisor, risk_assessor
 from task import analyze_financial_document as analyze_task, verification, investment_analysis, risk_assessment
 from database import get_db, init_database, close_database
-from crud import CombinedCRUD, AnalysisCRUD, FileCRUD
+from crud import AnalysisCRUD
 
 app = FastAPI(title="Financial Document Analyzer", description="AI-powered financial document analysis system")
 
@@ -106,13 +106,9 @@ async def analyze_financial_document_endpoint(
         
         query = query.strip()[:1000]  # Limit query length for security
         
-        # Create database records
-        file_record, analysis_record = CombinedCRUD.create_analysis_with_file(
+        # Create analysis record
+        analysis_record = AnalysisCRUD.create_analysis(
             db=db,
-            filename=f"financial_document_{file_id}.pdf",
-            original_filename=file.filename,
-            file_path=file_path,
-            file_size=len(content),
             query=query,
             analysis_type="comprehensive"
         )
@@ -144,9 +140,6 @@ async def analyze_financial_document_endpoint(
             }
         )
         
-        # Mark file as processed
-        FileCRUD.mark_file_processed(db=db, file_id=file_record.id)
-        
         return {
             "status": "success",
             "message": "Financial document analyzed successfully",
@@ -163,9 +156,7 @@ async def analyze_financial_document_endpoint(
                 ]
             },
             "file_info": {
-                "file_id": file_record.id,
                 "filename": file.filename,
-                "processed_at": file_path,
                 "file_size": len(content)
             },
             "disclaimer": "This analysis is for informational purposes only. Please consult with qualified financial professionals before making investment decisions."
@@ -214,7 +205,6 @@ async def get_analyses(
                 "analysis_type": analysis.analysis_type,
                 "created_at": analysis.created_at,
                 "completed_at": analysis.completed_at,
-                "file_id": analysis.file_id,
                 "user_id": analysis.user_id
             }
             for analysis in analyses
@@ -247,38 +237,9 @@ async def get_analysis(
         "created_at": analysis.created_at,
         "started_at": analysis.started_at,
         "completed_at": analysis.completed_at,
-        "file_id": analysis.file_id,
         "user_id": analysis.user_id
     }
 
-@app.get("/files")
-async def get_files(
-    skip: int = 0,
-    limit: int = 100,
-    db: Session = Depends(get_db)
-):
-    """Get uploaded files with pagination"""
-    files = FileCRUD.get_files(db=db, skip=skip, limit=limit)
-    return {
-        "files": [
-            {
-                "id": file.id,
-                "filename": file.filename,
-                "original_filename": file.original_filename,
-                "file_size": file.file_size,
-                "file_type": file.file_type,
-                "uploaded_at": file.uploaded_at,
-                "processed_at": file.processed_at,
-                "is_processed": file.is_processed
-            }
-            for file in files
-        ],
-        "pagination": {
-            "skip": skip,
-            "limit": limit,
-            "total": len(files)
-        }
-    }
 
 
 if __name__ == "__main__":

@@ -47,7 +47,6 @@ class Analysis(Base):
     
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=True)
-    file_id = Column(Integer, ForeignKey("files.id"), nullable=False)
     
     # Analysis metadata
     query = Column(Text, nullable=False)
@@ -66,33 +65,7 @@ class Analysis(Base):
     
     # Relationships
     user = relationship("User", back_populates="analyses")
-    file = relationship("File", back_populates="analyses")
 
-class File(Base):
-    """File model for storing uploaded file information"""
-    __tablename__ = "files"
-    
-    id = Column(Integer, primary_key=True, index=True)
-    filename = Column(String, nullable=False)
-    original_filename = Column(String, nullable=False)
-    file_path = Column(String, nullable=False)
-    file_size = Column(Integer, nullable=False)
-    file_type = Column(String, default="pdf")
-    
-    # File metadata
-    upload_ip = Column(String, nullable=True)
-    user_agent = Column(String, nullable=True)
-    
-    # Timestamps
-    uploaded_at = Column(DateTime, default=datetime.utcnow)
-    processed_at = Column(DateTime, nullable=True)
-    
-    # Status
-    is_processed = Column(Boolean, default=False)
-    is_deleted = Column(Boolean, default=False)
-    
-    # Relationships
-    analyses = relationship("Analysis", back_populates="file")
 
 # Database dependency
 def get_db():

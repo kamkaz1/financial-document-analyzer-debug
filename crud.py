@@ -34,78 +34,18 @@ class UserCRUD:
         """Get all users with pagination"""
         return db.query(User).offset(skip).limit(limit).all()
 
-# File CRUD operations
-class FileCRUD:
-    @staticmethod
-    def create_file(
-        db: Session, 
-        filename: str, 
-        original_filename: str, 
-        file_path: str, 
-        file_size: int,
-        file_type: str = "pdf",
-        upload_ip: str = None,
-        user_agent: str = None
-    ) -> File:
-        """Create a new file record"""
-        file_record = File(
-            filename=filename,
-            original_filename=original_filename,
-            file_path=file_path,
-            file_size=file_size,
-            file_type=file_type,
-            upload_ip=upload_ip,
-            user_agent=user_agent
-        )
-        db.add(file_record)
-        db.commit()
-        db.refresh(file_record)
-        return file_record
-    
-    @staticmethod
-    def get_file(db: Session, file_id: int) -> Optional[File]:
-        """Get file by ID"""
-        return db.query(File).filter(File.id == file_id).first()
-    
-    @staticmethod
-    def get_files(db: Session, skip: int = 0, limit: int = 100) -> List[File]:
-        """Get all files with pagination"""
-        return db.query(File).filter(File.is_deleted == False).offset(skip).limit(limit).all()
-    
-    @staticmethod
-    def mark_file_processed(db: Session, file_id: int) -> Optional[File]:
-        """Mark file as processed"""
-        file_record = db.query(File).filter(File.id == file_id).first()
-        if file_record:
-            file_record.is_processed = True
-            file_record.processed_at = datetime.utcnow()
-            db.commit()
-            db.refresh(file_record)
-        return file_record
-    
-    @staticmethod
-    def delete_file(db: Session, file_id: int) -> bool:
-        """Soft delete file"""
-        file_record = db.query(File).filter(File.id == file_id).first()
-        if file_record:
-            file_record.is_deleted = True
-            db.commit()
-            return True
-        return False
 
 # Analysis CRUD operations
 class AnalysisCRUD:
     @staticmethod
     def create_analysis(
         db: Session,
-        file_id: int,
         query: str,
         user_id: int = None,
         analysis_type: str = "comprehensive"
     ) -> Analysis:
         """Create a new analysis record"""
         analysis = Analysis(
-            file_id=file_id,
             user_id=user_id,
             query=query,
             analysis_type=analysis_type,
@@ -121,10 +61,6 @@ class AnalysisCRUD:
         """Get analysis by ID"""
         return db.query(Analysis).filter(Analysis.id == analysis_id).first()
     
-    @staticmethod
-    def get_analyses_by_file(db: Session, file_id: int) -> List[Analysis]:
-        """Get all analyses for a specific file"""
-        return db.query(Analysis).filter(Analysis.file_id == file_id).all()
     
     @staticmethod
     def get_analyses_by_user(db: Session, user_id: int, skip: int = 0, limit: int = 100) -> List[Analysis]:
@@ -167,40 +103,3 @@ class AnalysisCRUD:
         return analysis
     
 
-# Combined CRUD operations
-class CombinedCRUD:
-    @staticmethod
-    def create_analysis_with_file(
-        db: Session,
-        filename: str,
-        original_filename: str,
-        file_path: str,
-        file_size: int,
-        query: str,
-        user_id: int = None,
-        analysis_type: str = "comprehensive",
-        upload_ip: str = None,
-        user_agent: str = None
-    ) -> tuple[File, Analysis]:
-        """Create both file and analysis records in a transaction"""
-        # Create file record
-        file_record = FileCRUD.create_file(
-            db=db,
-            filename=filename,
-            original_filename=original_filename,
-            file_path=file_path,
-            file_size=file_size,
-            upload_ip=upload_ip,
-            user_agent=user_agent
-        )
-        
-        # Create analysis record
-        analysis = AnalysisCRUD.create_analysis(
-            db=db,
-            file_id=file_record.id,
-            user_id=user_id,
-            query=query,
-            analysis_type=analysis_type
-        )
-        
-        return file_record, analysis

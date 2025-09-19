@@ -19,7 +19,6 @@ async def create_tables():
         print("✅ Database tables created successfully!")
         print("📊 Tables created:")
         print("   - users")
-        print("   - files") 
         print("   - analyses")
         
     except Exception as e:
