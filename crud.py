@@ -6,33 +6,7 @@ from datetime import datetime
 from typing import List, Optional, Dict, Any
 from sqlalchemy.orm import Session
 from sqlalchemy import desc
-from database import User, Analysis, File
-
-# User CRUD operations
-class UserCRUD:
-    @staticmethod
-    def create_user(db: Session, email: str = None, name: str = None) -> User:
-        """Create a new user"""
-        user = User(email=email, name=name)
-        db.add(user)
-        db.commit()
-        db.refresh(user)
-        return user
-    
-    @staticmethod
-    def get_user(db: Session, user_id: int) -> Optional[User]:
-        """Get user by ID"""
-        return db.query(User).filter(User.id == user_id).first()
-    
-    @staticmethod
-    def get_user_by_email(db: Session, email: str) -> Optional[User]:
-        """Get user by email"""
-        return db.query(User).filter(User.email == email).first()
-    
-    @staticmethod
-    def get_users(db: Session, skip: int = 0, limit: int = 100) -> List[User]:
-        """Get all users with pagination"""
-        return db.query(User).offset(skip).limit(limit).all()
+from database import Analysis
 
 
 # Analysis CRUD operations
@@ -41,12 +15,10 @@ class AnalysisCRUD:
     def create_analysis(
         db: Session,
         query: str,
-        user_id: int = None,
         analysis_type: str = "comprehensive"
     ) -> Analysis:
         """Create a new analysis record"""
         analysis = Analysis(
-            user_id=user_id,
             query=query,
             analysis_type=analysis_type,
             status="pending"
@@ -62,10 +34,6 @@ class AnalysisCRUD:
         return db.query(Analysis).filter(Analysis.id == analysis_id).first()
     
     
-    @staticmethod
-    def get_analyses_by_user(db: Session, user_id: int, skip: int = 0, limit: int = 100) -> List[Analysis]:
-        """Get all analyses for a specific user"""
-        return db.query(Analysis).filter(Analysis.user_id == user_id).offset(skip).limit(limit).all()
     
     @staticmethod
     def get_recent_analyses(db: Session, skip: int = 0, limit: int = 100) -> List[Analysis]:

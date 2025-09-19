@@ -204,8 +204,7 @@ async def get_analyses(
                 "status": analysis.status,
                 "analysis_type": analysis.analysis_type,
                 "created_at": analysis.created_at,
-                "completed_at": analysis.completed_at,
-                "user_id": analysis.user_id
+                "completed_at": analysis.completed_at
             }
             for analysis in analyses
         ],
@@ -236,8 +235,7 @@ async def get_analysis(
         "error_message": analysis.error_message,
         "created_at": analysis.created_at,
         "started_at": analysis.started_at,
-        "completed_at": analysis.completed_at,
-        "user_id": analysis.user_id
+        "completed_at": analysis.completed_at
     }
 
 
