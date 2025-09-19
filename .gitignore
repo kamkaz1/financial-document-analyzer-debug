@@ -166,3 +166,6 @@ logs/
 # API keys and secrets
 secrets.json
 config.json
+
+# Documentation files (keep local only)
+COMPREHENSIVE_PROJECT_EXPLANATION.md
