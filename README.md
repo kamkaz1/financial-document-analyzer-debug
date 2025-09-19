@@ -2,26 +2,9 @@
 
 A professional AI-powered financial document analysis system built with CrewAI, featuring specialized agents for comprehensive financial analysis, investment recommendations, and risk assessment.
 
-## 🚀 Features
 
-- **Multi-Agent Architecture**: 4 specialized AI agents for different aspects of financial analysis
-- **Professional API**: FastAPI-based REST API with comprehensive endpoints
-- **Advanced Tools**: Specialized tools for document processing, investment analysis, and risk assessment
-- **Security Features**: File validation, query sanitization, and secure file handling
-- **Production Ready**: Comprehensive error handling, logging, and cleanup
 
-## 🏗️ Architecture
 
-### Specialized Agents
-- **Financial Analyst**: Core financial analysis and reporting
-- **Document Verifier**: Authentication and compliance checking
-- **Investment Advisor**: Evidence-based investment recommendations
-- **Risk Assessor**: Comprehensive risk analysis and mitigation strategies
-
-### Professional Tools
-- **FinancialDocumentTool**: Advanced PDF reading with text cleaning
-- **InvestmentTool**: Intelligent investment analysis with keyword detection
-- **RiskTool**: Comprehensive risk assessment with indicator identification
 
 ### API Endpoints
 - `GET /` - Health check
@@ -297,5 +280,31 @@ with open('financial_report.pdf', 'rb') as f:
     print(result['analysis']['detailed_results'])
 ```
 
+## 🎁 Bonus Features
+
+### Database Integration
+- **SQLite Database**: Stores analysis results and user data
+- **CRUD Operations**: Complete database management for analyses and users
+- **Data Persistence**: All analysis results are saved and retrievable
+
+### Redis Queue System
+- **Asynchronous Processing**: Handle multiple analysis requests concurrently
+- **Background Tasks**: Non-blocking document processing
+- **Queue Management**: Monitor queue status and job statistics
+- **Graceful Fallback**: Falls back to synchronous processing if Redis unavailable
+
+### Project Structure
+```
+├── agents.py, task.py, tools.py    # Core CrewAI components
+├── main.py                         # FastAPI application
+├── database/                       # Database package
+│   ├── database.py                # SQLAlchemy models
+│   ├── crud.py                    # Database operations
+│   └── init_db.py                 # Database initialization
+└── redis_queue/                   # Queue package
+    ├── queue_config.py            # Redis configuration
+    ├── background_tasks.py        # Background processing
+    └── worker.py                  # Queue worker
+```
 
 

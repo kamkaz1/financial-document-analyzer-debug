@@ -2,7 +2,7 @@
 Simple Redis Queue Worker for Financial Document Analyzer
 """
 
-from queue_config import get_queue, is_redis_available
+from .queue_config import get_queue, is_redis_available
 
 def start_worker():
     """Start the Redis queue worker"""

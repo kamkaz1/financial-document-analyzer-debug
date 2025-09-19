@@ -8,10 +8,10 @@ from datetime import datetime
 from crewai import Crew, Process
 from agents import financial_analyst, verifier, investment_advisor, risk_assessor
 from task import analyze_financial_document as analyze_task, verification, investment_analysis, risk_assessment
-from database import get_db, init_database, close_database
-from crud import AnalysisCRUD
-from queue_config import get_queue, is_redis_available
-from background_tasks import run_financial_analysis
+from database.database import get_db, init_database, close_database
+from database.crud import AnalysisCRUD
+from redis_queue.queue_config import get_queue, is_redis_available
+from redis_queue.background_tasks import run_financial_analysis
 
 app = FastAPI(title="Financial Document Analyzer", description="AI-powered financial document analysis system")
 

@@ -3,7 +3,7 @@ Database initialization script for Financial Document Analyzer
 """
 
 import asyncio
-from database import init_database, close_database, Base, engine
+from .database import init_database, close_database, Base, engine
 
 async def create_tables():
     """Create all database tables"""

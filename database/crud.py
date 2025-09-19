@@ -6,7 +6,7 @@ from datetime import datetime
 from typing import List, Optional, Dict, Any
 from sqlalchemy.orm import Session
 from sqlalchemy import desc
-from database import User, Analysis
+from .database import User, Analysis
 
 # User CRUD operations
 class UserCRUD:

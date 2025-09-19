@@ -6,8 +6,8 @@ import os
 from crewai import Crew, Process
 from agents import financial_analyst, verifier, investment_advisor, risk_assessor
 from task import analyze_financial_document as analyze_task, verification, investment_analysis, risk_assessment
-from database import SessionLocal
-from crud import AnalysisCRUD
+from database.database import SessionLocal
+from database.crud import AnalysisCRUD
 
 def run_financial_analysis(analysis_id: int, query: str, file_path: str):
     """
