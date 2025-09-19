@@ -28,12 +28,24 @@ Base = declarative_base()
 database = Database(DATABASE_URL)
 
 # Database Models
+class User(Base):
+    """User model for storing user information"""
+    __tablename__ = "users"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    email = Column(String, unique=True, index=True, nullable=True)
+    name = Column(String, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    
+    # Relationships
+    analyses = relationship("Analysis", back_populates="user")
 
 class Analysis(Base):
     """Analysis model for storing financial document analysis results"""
     __tablename__ = "analyses"
     
     id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=True)
     
     # Analysis metadata
     query = Column(Text, nullable=False)
@@ -49,6 +61,9 @@ class Analysis(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
     started_at = Column(DateTime, nullable=True)
     completed_at = Column(DateTime, nullable=True)
+    
+    # Relationships
+    user = relationship("User", back_populates="analyses")
 
 
 # Database dependency
